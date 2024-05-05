@@ -145,25 +145,20 @@ function check_env() {
 # @exitcode 0 If successful.
 function check_opts() {
     read -ra opts <<< "$@"
-    local skip_check_opts=0;
     for opt in "${opts[@]}"; do
-        if [[ $skip_check_opts -eq 0 ]]; then
-            case "$opt" in
-                -h|--help) HELP=1 ;;
-                -i|--init) INIT=1 ;;
-                -s|--start) START=1 ;;
-                -t|--stop) STOP=1 ;;
-                -c|--clean) CLEAN=1 ;;
-                -l|--logs) DISPLAY_LOGS=1 ;;
-                -v|--verbose) VERBOSE=1 ;;
-                *) CMD_DOCKER+=("$opt") && skip_check_opts=1 ;;
-            esac
-        else
-            CMD_DOCKER+=("$opt")
-        fi
+        case "$opt" in
+            init) INIT=1 ;;
+            start) START=1 ;;
+            stop) STOP=1 ;;
+            clean) CLEAN=1 ;;
+            logs) DISPLAY_LOGS=1 ;;
+            -h|--help) HELP=1 ;;
+            -v|--verbose) VERBOSE=1 ;;
+            *) continue ;;
+        esac
     done
     # Help is displayed if no option is passed as script parameter
-    if [[ $((HELP+INIT+START+STOP+CLEAN+DISPLAY_LOGS+${#CMD_DOCKER[@]})) -eq 0 ]]; then
+    if [[ $((HELP+INIT+START+STOP+CLEAN+DISPLAY_LOGS)) -eq 0 ]]; then
         HELP=1
     fi
     return 0
@@ -213,15 +208,16 @@ function execute_tasks() {
 function display_help() {
     local output=""
     output="
-${COLORS[YELLOW]}Usage${COLORS[WHITE]} $(basename "$0") [OPTION]
+${COLORS[YELLOW]}Usage${COLORS[WHITE]} $(basename "$0") [OPTIONS] COMMAND
+${COLORS[YELLOW]}Commands:${COLORS[NOCOLOR]}
+${COLORS[GREEN]}init${COLORS[WHITE]}                Building the ecoCode plugin and creating containers
+${COLORS[GREEN]}start${COLORS[WHITE]}               Starting Docker containers
+${COLORS[GREEN]}stop${COLORS[WHITE]}                Stopping Docker containers
+${COLORS[GREEN]}clean${COLORS[WHITE]}               Stop and remove containers, networks and volumes
+${COLORS[GREEN]}logs${COLORS[WHITE]}                Display Docker container logs
 ${COLORS[YELLOW]}Options:${COLORS[NOCOLOR]}
-  ${COLORS[GREEN]}-h, --help${COLORS[WHITE]}            Display help
-  ${COLORS[GREEN]}-i, --init${COLORS[WHITE]}            Building the ecoCode plugin and creating containers
-  ${COLORS[GREEN]}-s, --start${COLORS[WHITE]}           Starting Docker containers
-  ${COLORS[GREEN]}-t, --stop${COLORS[WHITE]}            Stopping Docker containers
-  ${COLORS[GREEN]}-s, --clean${COLORS[WHITE]}           Stop and remove containers, networks and volumes
-  ${COLORS[GREEN]}-s, --logs${COLORS[WHITE]}            Display Docker container logs
-  ${COLORS[GREEN]}-v, --verbose${COLORS[WHITE]}         Make the command more talkative
+  ${COLORS[GREEN]}-h, --help${COLORS[WHITE]}        Display help
+  ${COLORS[GREEN]}-v, --verbose${COLORS[WHITE]}     Make the command more talkative
     "
     echo -e "$output\n"|sed '1d; $d'
     return 0
